@@ -30,6 +30,8 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "semphr.h" // Include if using semaphores in ISR
+#include <SEGGER_SYSVIEW.h>
+#include <lookBusy.h>
 #include "stm32f7xx.h"
 
 #include "font_extra.h"
@@ -103,7 +105,8 @@ void vLED1Task(void *pvParameters) {
 	uint32_t timeout = 100; // Timeout for transmission
 
     for (;;) {
-        // Toggle LED1 (PB0)
+    	SEGGER_SYSVIEW_PrintfHost("vLED1Task started");
+    	// Toggle LED1 (PB0)
         GPIOB->ODR ^= (1 << LED1_PIN);
 
         HAL_ADC_Start(&hadc1);
@@ -129,7 +132,8 @@ void vLED1Task(void *pvParameters) {
 
 void vLED2Task(void *pvParameters) {
 	for (;;) {
-        GPIOB->ODR ^= (1 << LED2_PIN); // Toggle LED2 (PB7)
+		SEGGER_SYSVIEW_PrintfHost("vLED2Task started");
+		GPIOB->ODR ^= (1 << LED2_PIN); // Toggle LED2 (PB7)
         vTaskDelay(pdMS_TO_TICKS(300));
     }
 }
@@ -142,7 +146,8 @@ void vLED3Task(void *pvParameters) {
 	uint32_t timeout = 100; // Timeout for transmission
 
 	for (;;) {
-        GPIOB->ODR ^= (1 << LED3_PIN); // Toggle LED3 (PB14)
+		SEGGER_SYSVIEW_PrintfHost("vLED3Task started");
+		GPIOB->ODR ^= (1 << LED3_PIN); // Toggle LED3 (PB14)
 
         // Read temperature and humidity data from SHT31
         // Assumes SHT31_ReadTempHumidity correctly populates both values on success
@@ -305,6 +310,8 @@ int main(void)
   MX_ADC1_Init();
   MX_I2C2_Init();
   /* USER CODE BEGIN 2 */
+  SEGGER_SYSVIEW_Conf();
+  NVIC_SetPriorityGrouping( 0 ); // ensure proper priority grouping for freeRTOS
   ssd1306_Init();
   ssd1306_Fill(Black);
   ssd1306_UpdateScreen();
@@ -351,7 +358,11 @@ int main(void)
   // 5. Configure Pull-up/Pull-down: No pull-up, no pull-down (00)
   GPIOE->PUPDR &= ~(GPIO_PUPDR_PUPDR0); // Clear bits 1:0 for Pin 0 (mask is 0b11 << 0)
                                         // 00 is the default state (No pull) after clearing
-
+  // Spin until the user starts the SystemView app, in Record mode
+  while(SEGGER_SYSVIEW_IsStarted()==0)
+  {
+      lookBusy(100);
+  }
   // Create tasks
   xTaskCreate(vLED1Task, "LED1", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
   xTaskCreate(vLED2Task, "LED2", configMINIMAL_STACK_SIZE, NULL, tskIDLE_PRIORITY + 1, NULL);
