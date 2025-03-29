@@ -1,0 +1,106 @@
+# Compiled Object files
+*.o
+*.elf
+*.hex
+*.bin
+*.srec
+*.map
+*.lst
+*.out
+
+# Libraries
+*.lib
+*.a
+*.so
+*.dylib
+
+# Executables
+*.exe
+*.out
+
+# Temporary files from build process
+*.d
+*.su
+*.i
+*.s
+*.asm
+
+# Other IDE files (if applicable)
+*.log
+*.bak
+*.swp
+*.swo
+*.DS_Store
+Thumbs.db
+
+# Segger files
+*.jlink
+*.jscope
+
+# OS generated files
+[Tt]humbs.db
+*.DS_Store
+
+# Virtual Environment (if applicable)
+venv/
+env/
+.venv/
+
+# Other files you might want to ignore
+*.user
+*.orig
+
+# Build Artifacts
+build/
+Debug/
+Release/
+*.d
+*.srec
+
+# OS generated files #
+.DS_Store
+Thumbs.db
+
+# IDE Specific files #
+.vscode/
+.idea/
+*.swp
+*.swo
+*.log
+
+# STM32CubeIDE specific files
+!*.ioc
+!.project
+!.mxproject
+!.cproject
+!.settings/
+
+# Explicitly include linker script
+!*.ld # if you have a specific name, use that instead.
+
+# General C project exclusions
+*.gch
+*.stackdump
+*.bak
+*.orig
+*.rej
+*.diff
+
+# Editor backups
+*~
+.#*
+
+# System files
+core.*
+*.core
+
+# Coverage data
+*.gcda
+*.gcno
+
+# Other IDE or build system specific files
+*.mk
+*.dep
+*.pdb
+*.suo
+*.user
