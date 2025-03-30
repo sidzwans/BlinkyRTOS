@@ -44,9 +44,13 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define LED1_PIN        0  // PB0
-#define LED2_PIN        7  // PB7
-#define LED3_PIN        14 // PB14
+//#define LED1_PIN        0  // PB0
+//#define LED2_PIN        7  // PB7
+//#define LED3_PIN        14 // PB14
+#define LED1_GPIO_PIN GPIO_PIN_0
+#define LED2_GPIO_PIN GPIO_PIN_7
+#define LED3_GPIO_PIN GPIO_PIN_14
+#define PE0_GPIO_PIN  GPIO_PIN_0
 
 //#define SHT31_ADDR 0x44 << 1 // SHT31 I2C address shifted left by 1 bit
 //#define CMD_MEASURE_TEMP 0x2C06 // Command to measure temperature
@@ -107,7 +111,8 @@ void vLED1Task(void *pvParameters) {
     for (;;) {
     	SEGGER_SYSVIEW_PrintfHost("vLED1Task started");
     	// Toggle LED1 (PB0)
-        GPIOB->ODR ^= (1 << LED1_PIN);
+//        GPIOB->ODR ^= (1 << LED1_PIN);
+    	HAL_GPIO_TogglePin(GPIOB, LED1_GPIO_PIN);
 
         HAL_ADC_Start(&hadc1);
         HAL_ADC_PollForConversion(&hadc1, 20);
@@ -133,7 +138,8 @@ void vLED1Task(void *pvParameters) {
 void vLED2Task(void *pvParameters) {
 	for (;;) {
 		SEGGER_SYSVIEW_PrintfHost("vLED2Task started");
-		GPIOB->ODR ^= (1 << LED2_PIN); // Toggle LED2 (PB7)
+//		GPIOB->ODR ^= (1 << LED2_PIN); // Toggle LED2 (PB7)
+		HAL_GPIO_TogglePin(GPIOB, LED2_GPIO_PIN);
         vTaskDelay(pdMS_TO_TICKS(300));
     }
 }
@@ -147,7 +153,8 @@ void vLED3Task(void *pvParameters) {
 
 	for (;;) {
 		SEGGER_SYSVIEW_PrintfHost("vLED3Task started");
-		GPIOB->ODR ^= (1 << LED3_PIN); // Toggle LED3 (PB14)
+//		GPIOB->ODR ^= (1 << LED3_PIN); // Toggle LED3 (PB14)
+		HAL_GPIO_TogglePin(GPIOB, LED3_GPIO_PIN);
 
         // Read temperature and humidity data from SHT31
         // Assumes SHT31_ReadTempHumidity correctly populates both values on success
@@ -198,15 +205,16 @@ void vLED3Task(void *pvParameters) {
         lux = HAL_ADC_GetValue(&hadc1);
 
         if (lux < 50){
-//              HAL_GPIO_WritePin(GPIOE, GPIO_PIN_0, GPIO_PIN_SET);
+            HAL_GPIO_WritePin(GPIOE, PE0_GPIO_PIN, GPIO_PIN_SET);
+
           ssd1306_SetContrast(255);
           ssd1306_UpdateScreen();
           GPIOE->BSRR = (1UL << 0);
         }else{// Turn LED on
-//              HAL_GPIO_WritePin(GPIOE, GPIO_PIN_0, GPIO_PIN_RESET);
+          HAL_GPIO_WritePin(GPIOE, PE0_GPIO_PIN, GPIO_PIN_RESET);
           ssd1306_SetContrast(100);
           ssd1306_UpdateScreen();
-          GPIOE->BSRR = (1UL << (0 + 16));
+
         }
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
@@ -324,40 +332,40 @@ int main(void)
       Error_Handler();
   }
 
-  RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
+//  RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
+//
+//  // Configure LED pins as output (Direct Register Access)
+//  GPIOB->MODER &= ~((3 << (LED1_PIN * 2)) | (3 << (LED2_PIN * 2)) | (3 << (LED3_PIN * 2)));
+//  GPIOB->MODER |=  ((1 << (LED1_PIN * 2)) | (1 << (LED2_PIN * 2)) | (1 << (LED3_PIN * 2)));
+//  GPIOB->OTYPER &= ~((1 << LED1_PIN) | (1 << LED2_PIN) | (1 << LED3_PIN));
+//  GPIOB->OSPEEDR &= ~((3 << (LED1_PIN * 2)) | (3 << (LED2_PIN * 2)) | (3 << (LED3_PIN * 2)));
+//  GPIOB->PUPDR &= ~((3 << (LED1_PIN * 2)) | (3 << (LED2_PIN * 2)) | (3 << (LED3_PIN * 2)));
+//
+//  // 1. Enable GPIOE Clock in RCC_AHB1ENR register
+//  // Make sure RCC definition is available (usually via stm32f7xx.h -> included in main.h)
+//  RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN; // Set the GPIOE clock enable bit
+//
+//  // Short delay after enabling clock (optional, sometimes good practice)
+//  // volatile uint32_t dummy_delay = RCC->AHB1ENR;
+//  // (void)dummy_delay; // Avoid unused variable warning
+//
+//  // Configure PE0 (Pin 0 on GPIOE)
+//  // Make sure GPIOE definition is available (usually via stm32f7xx.h -> included in main.h)
 
-  // Configure LED pins as output (Direct Register Access)
-  GPIOB->MODER &= ~((3 << (LED1_PIN * 2)) | (3 << (LED2_PIN * 2)) | (3 << (LED3_PIN * 2)));
-  GPIOB->MODER |=  ((1 << (LED1_PIN * 2)) | (1 << (LED2_PIN * 2)) | (1 << (LED3_PIN * 2)));
-  GPIOB->OTYPER &= ~((1 << LED1_PIN) | (1 << LED2_PIN) | (1 << LED3_PIN));
-  GPIOB->OSPEEDR &= ~((3 << (LED1_PIN * 2)) | (3 << (LED2_PIN * 2)) | (3 << (LED3_PIN * 2)));
-  GPIOB->PUPDR &= ~((3 << (LED1_PIN * 2)) | (3 << (LED2_PIN * 2)) | (3 << (LED3_PIN * 2)));
-
-  // 1. Enable GPIOE Clock in RCC_AHB1ENR register
-  // Make sure RCC definition is available (usually via stm32f7xx.h -> included in main.h)
-  RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN; // Set the GPIOE clock enable bit
-
-  // Short delay after enabling clock (optional, sometimes good practice)
-  // volatile uint32_t dummy_delay = RCC->AHB1ENR;
-  // (void)dummy_delay; // Avoid unused variable warning
-
-  // Configure PE0 (Pin 0 on GPIOE)
-  // Make sure GPIOE definition is available (usually via stm32f7xx.h -> included in main.h)
-
-  // 2. Configure Mode: General purpose output (01)
-  GPIOE->MODER &= ~(GPIO_MODER_MODER0); // Clear bits 1:0 for Pin 0 (mask is 0b11 << 0)
-  GPIOE->MODER |=  (GPIO_MODER_MODER0_0); // Set bit 0 to 1 (value is 0b01 << 0)
-
-  // 3. Configure Output Type: Push-pull (0)
-  GPIOE->OTYPER &= ~(GPIO_OTYPER_OT0); // Clear bit 0 for Pin 0 (mask is 0b1 << 0)
-
-  // 4. Configure Output Speed: Low speed (00)
-  GPIOE->OSPEEDR &= ~(GPIO_OSPEEDER_OSPEEDR0); // Clear bits 1:0 for Pin 0 (mask is 0b11 << 0)
-                                              // 00 is the default state (Low speed) after clearing
-
-  // 5. Configure Pull-up/Pull-down: No pull-up, no pull-down (00)
-  GPIOE->PUPDR &= ~(GPIO_PUPDR_PUPDR0); // Clear bits 1:0 for Pin 0 (mask is 0b11 << 0)
-                                        // 00 is the default state (No pull) after clearing
+//  // 2. Configure Mode: General purpose output (01)
+//  GPIOE->MODER &= ~(GPIO_MODER_MODER0); // Clear bits 1:0 for Pin 0 (mask is 0b11 << 0)
+//  GPIOE->MODER |=  (GPIO_MODER_MODER0_0); // Set bit 0 to 1 (value is 0b01 << 0)
+//
+//  // 3. Configure Output Type: Push-pull (0)
+//  GPIOE->OTYPER &= ~(GPIO_OTYPER_OT0); // Clear bit 0 for Pin 0 (mask is 0b1 << 0)
+//
+//  // 4. Configure Output Speed: Low speed (00)
+//  GPIOE->OSPEEDR &= ~(GPIO_OSPEEDER_OSPEEDR0); // Clear bits 1:0 for Pin 0 (mask is 0b11 << 0)
+//                                              // 00 is the default state (Low speed) after clearing
+//
+//  // 5. Configure Pull-up/Pull-down: No pull-up, no pull-down (00)
+//  GPIOE->PUPDR &= ~(GPIO_PUPDR_PUPDR0); // Clear bits 1:0 for Pin 0 (mask is 0b11 << 0)
+//                                        // 00 is the default state (No pull) after clearing
   // Spin until the user starts the SystemView app, in Record mode
   while(SEGGER_SYSVIEW_IsStarted()==0)
   {
@@ -659,14 +667,36 @@ static void MX_USART2_UART_Init(void)
   */
 static void MX_GPIO_Init(void)
 {
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
 /* USER CODE BEGIN MX_GPIO_Init_1 */
 /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOF_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOD_CLK_ENABLE();
+  __HAL_RCC_GPIOE_CLK_ENABLE();
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0|GPIO_PIN_14|GPIO_PIN_7, GPIO_PIN_SET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOE, GPIO_PIN_0, GPIO_PIN_SET);
+
+  /*Configure GPIO pins : PB0 PB14 PB7 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_14|GPIO_PIN_7;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PE0 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
 /* USER CODE BEGIN MX_GPIO_Init_2 */
 /* USER CODE END MX_GPIO_Init_2 */
